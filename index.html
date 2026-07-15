@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🟣 Kacenger ULTRA V2</title>
+    <title>🟣 Kacenger – Czat na Żywo</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
@@ -32,7 +35,6 @@
         .btn.secondary:hover { background:rgba(255,255,255,0.1); box-shadow:none; }
         .btn.danger { background:linear-gradient(135deg,#882222,#cc3333); }
         .btn.danger:hover { box-shadow:0 10px 40px rgba(200,50,50,0.3); }
-        .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
         .switch { color:#b388ff; cursor:pointer; text-align:center; margin-top:14px; font-size:13px; font-weight:500; transition:0.3s; }
         .switch:hover { text-decoration:underline; color:#d4b8ff; }
         .hidden { display:none !important; }
@@ -60,7 +62,7 @@
         .msg img { max-width:200px; max-height:150px; border-radius:10px; display:block; margin-top:4px; border:1px solid rgba(255,255,255,0.05); }
         .chat-input { display:flex; gap:8px; padding:10px 14px; border-top:1px solid rgba(255,255,255,0.05); align-items:center; }
         .chat-input input[type="text"] { flex:1; padding:10px 16px; border-radius:30px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.04); color:#fff; font-size:13px; outline:none; transition:0.3s; }
-        .chat-input input[type="text"]:focus { border-color:#b388ff; background:rgba(255,255,255,0.08); }
+        .chat-input input:focus { border-color:#b388ff; background:rgba(255,255,255,0.08); }
         .chat-input button { padding:10px 18px; border-radius:30px; border:none; background:linear-gradient(135deg,#6a1a8a,#8a2aaa); color:#fff; font-weight:600; cursor:pointer; transition:0.3s; }
         .chat-input button:hover { transform:scale(1.05); }
         .chat-input .file-btn { background:rgba(255,255,255,0.06); padding:10px 14px; border-radius:30px; cursor:pointer; transition:0.3s; border:1px solid rgba(255,255,255,0.05); color:#aaa; }
@@ -94,8 +96,8 @@
         .remember-me input[type="checkbox"] { accent-color:#b388ff; width:16px; height:16px; cursor:pointer; }
         .delete-section { margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.06); }
         .delete-section .warning { color:rgba(255,100,100,0.6); font-size:12px; text-align:center; margin-bottom:10px; }
-        .notification-badge { background:#ff4444; color:#fff; border-radius:50%; padding:2px 8px; font-size:10px; margin-left:4px; }
         @media (max-width:500px){ #app { padding:16px; } .tab-bar button { font-size:10px; padding:8px; } }
+        .encrypted-badge { background:rgba(0,255,100,0.1); border:1px solid rgba(0,255,100,0.2); color:#66ff66; padding:4px 12px; border-radius:20px; font-size:10px; display:inline-block; margin-left:8px; }
     </style>
 </head>
 <body>
@@ -104,8 +106,8 @@
 
 <div id="app">
     <div id="authBox">
-        <div class="logo"><h1>🟣 Kacenger</h1><span>V2</span></div>
-        <div class="sub">Szybki czat z głosem i szyfrowaniem</div>
+        <div class="logo"><h1>🟣 Kacenger</h1><span>LIVE</span></div>
+        <div class="sub">Szyfrowany czat na żywo ⚡</div>
         <div id="authError" class="msg-error"></div>
         <div id="authSuccess" class="msg-success"></div>
         <div class="input-group"><label>👤 Nazwa użytkownika</label><input id="regLogin" placeholder="np. kacperek" autocomplete="username"></div>
@@ -120,7 +122,7 @@
 
     <div id="chatBox" class="hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <div class="logo" style="margin:0;"><h1 style="font-size:20px;">🟣 Kacenger</h1></div>
+            <div class="logo" style="margin:0;"><h1 style="font-size:20px;">🟣 Kacenger</h1><span class="encrypted-badge">🔒 SZYFROWANE</span></div>
             <span class="online-count" id="onlineCount">● 0 online</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:14px;margin-bottom:10px;">
@@ -191,110 +193,63 @@
             <div class="input-group"><label>📖 Opis</label><textarea id="profileBio" placeholder="Kilka słów o Tobie..." onchange="updateProfile()"></textarea></div>
             <button class="btn secondary" onclick="updateProfile()">💾 Zapisz profil</button>
             <div class="delete-section">
-                <div class="warning">⚠️ Usunięcie konta jest nieodwracalne. Wszystkie dane zostaną trwale usunięte.</div>
+                <div class="warning">⚠️ Usunięcie konta jest nieodwracalne.</div>
                 <button class="btn danger" onclick="deleteAccount()">🗑️ USUŃ KONTO</button>
             </div>
         </div>
-        <div class="footer-text">🔒 Dane szyfrowane SHA-256 • GitHub storage • Hasło min. 8 znaków</div>
+        <div class="footer-text">🔒 Szyfrowanie AES • Firebase Realtime • ⚡ Wiadomości na żywo</div>
     </div>
 </div>
 
 <script>
 // ==============================================================
-// KACENGER ULTRA V2 – WSZYSTKIE BŁĘDY NAPRAWDIONE
+// KACENGER LIVE – SZYFROWANY CZAT NA ŻYWO (FIREBASE)
 // ==============================================================
 
-// ===== KONFIGURACJA =====
-let GITHUB_TOKEN = "";
-let GITHUB_OWNER = "ShareFileNow";
-let GITHUB_REPO = "Kacenger";
-let GITHUB_BRANCH = "main";
+// 🔴🔴🔴 KONFIGURACJA FIREBASE – ZMIEŃ NA SWOJE DANE 🔴🔴🔴
+const firebaseConfig = {
+    apiKey: "AIzaSy_TWOJ_API_KEY",
+    authDomain: "twoj-projekt.firebaseapp.com",
+    databaseURL: "https://twoj-projekt-default-rtdb.firebaseio.com",
+    projectId: "twoj-projekt",
+    storageBucket: "twoj-projekt.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+};
 
+// ===== INICJALIZACJA FIREBASE =====
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// ===== SZYFROWANIE =====
+const SECRET_KEY = "KacengerSuperSecret2026";
+
+function encrypt(text) {
+    return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+}
+
+function decrypt(encrypted) {
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    } catch(e) { return "[odszyfrowanie nieudane]"; }
+}
+
+// ===== STAN =====
 let currentUser = null;
 let currentChat = null;
 let isLogin = true;
 let refreshInterval = null;
 let isRecording = false;
 let recognition = null;
-let pendingMessages = [];
-let messageCache = {};
 let friendRequests = {};
-let lastMessageHash = "";
+let messageListeners = [];
 
-// ===== WCZYTANIE CONFIG =====
-async function loadConfig() {
-    try {
-        const resp = await fetch('config.json');
-        if (!resp.ok) throw new Error('Brak config.json');
-        const config = await resp.json();
-        GITHUB_TOKEN = "ghp_" + config.token;
-        GITHUB_OWNER = config.owner || "ShareFileNow";
-        GITHUB_REPO = config.repo || "Kacenger";
-        console.log('✅ Konfiguracja wczytana');
-        return true;
-    } catch(e) {
-        console.error('❌ Błąd:', e);
-        document.getElementById('authError').textContent = '❌ Brak config.json!';
-        document.getElementById('authError').style.display = 'block';
-        return false;
-    }
-}
-
+// ===== AUTH =====
 function hashPassword(pass) {
     return CryptoJS.SHA256(pass).toString();
 }
 
-// ===== GITHUB API Z RETRY =====
-async function readGitHubFile(path, retries = 3) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
-            const resp = await fetch(url, {
-                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (resp.status === 404) return null;
-            if (!resp.ok) throw new Error('Błąd odczytu');
-            const data = await resp.json();
-            return JSON.parse(atob(data.content));
-        } catch(e) {
-            if (i === retries - 1) throw e;
-            await new Promise(r => setTimeout(r, 500));
-        }
-    }
-}
-
-async function writeGitHubFile(path, content, message = 'Update', retries = 3) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
-            let sha = null;
-            try {
-                const resp = await fetch(url, {
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-                });
-                if (resp.ok) { const data = await resp.json(); sha = data.sha; }
-            } catch(e) {}
-            const body = {
-                message: message,
-                content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
-                branch: GITHUB_BRANCH
-            };
-            if (sha) body.sha = sha;
-            const resp = await fetch(url, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!resp.ok) throw new Error('Błąd zapisu');
-            return await resp.json();
-        } catch(e) {
-            if (i === retries - 1) throw e;
-            await new Promise(r => setTimeout(r, 500));
-        }
-    }
-}
-
-// ===== AUTH =====
 async function authAction() {
     const login = document.getElementById('regLogin').value.trim();
     const pass = document.getElementById('regPassword').value.trim();
@@ -317,7 +272,9 @@ async function authAction() {
     const remember = document.getElementById('rememberMe').checked;
     
     try {
-        const users = await readGitHubFile('users.json') || {};
+        const snapshot = await database.ref('users').once('value');
+        const users = snapshot.val() || {};
+        
         if (isLogin) {
             if (!users[login]) {
                 err.textContent = 'Użytkownik nie istnieje';
@@ -340,8 +297,7 @@ async function authAction() {
                 err.style.display = 'block';
                 return;
             }
-            users[login] = hashed;
-            await writeGitHubFile('users.json', users, `Dodano ${login}`);
+            await database.ref('users/' + login).set(hashed);
             suc.textContent = '✅ Konto utworzone! Zaloguj się.';
             suc.style.display = 'block';
             toggleAuth();
@@ -368,6 +324,9 @@ function logout() {
     document.getElementById('authBox').style.display = 'block';
     if (refreshInterval) clearInterval(refreshInterval);
     if (recognition) { recognition.stop(); isRecording = false; }
+    // Odłącz nasłuchiwanie
+    messageListeners.forEach(ref => ref.off());
+    messageListeners = [];
 }
 
 function checkSession() {
@@ -390,35 +349,57 @@ async function enterChat() {
     document.getElementById('authBox').style.display = 'none';
     document.getElementById('chatBox').classList.remove('hidden');
     document.getElementById('myNameDisplay').textContent = `👤 ${currentUser}`;
+    
+    // Ustaw status online
+    await database.ref('online/' + currentUser).set(true);
+    await database.ref('online/' + currentUser).onDisconnect().set(false);
+    
     await loadProfile();
     await refreshFriends();
     await refreshGroups();
     await updateChatSelect();
     switchTab('friends');
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(async () => {
-        if (currentChat) await loadChat();
-        await refreshFriends();
-        await refreshGroups();
-        await updateOnlineCount();
-    }, 2000);
-    await updateOnlineCount();
+    
+    // Nasłuchiwanie wiadomości w czasie rzeczywistym
+    setupMessageListener();
+    
+    // Aktualizacja liczby online
+    database.ref('online').on('value', (snapshot) => {
+        const online = snapshot.val() || {};
+        const count = Object.keys(online).filter(k => online[k] === true).length;
+        document.getElementById('onlineCount').textContent = `● ${count} online`;
+    });
+    
     initVoice();
 }
 
-async function updateOnlineCount() {
-    try {
-        const online = await readGitHubFile('online.json') || {};
-        const count = Object.keys(online).length;
-        document.getElementById('onlineCount').textContent = `● ${count} online`;
-    } catch(e) {}
+// ===== NASŁUCHIWANIE WIADOMOŚCI (NA ŻYWO) =====
+function setupMessageListener() {
+    // Usuń stare listenery
+    messageListeners.forEach(ref => ref.off());
+    messageListeners = [];
+    
+    const messagesRef = database.ref('messages');
+    const listener = messagesRef.on('child_added', (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.room === currentChat) {
+            const decrypted = decrypt(data.text);
+            const msg = {
+                sender: data.sender,
+                text: decrypted,
+                time: data.time || new Date().toLocaleTimeString()
+            };
+            addMessageToChat(msg);
+        }
+    });
+    messageListeners.push({ ref: messagesRef, listener });
 }
 
 // ===== PROFIL =====
 async function loadProfile() {
     try {
-        const profiles = await readGitHubFile('profiles.json') || {};
-        const p = profiles[currentUser] || {};
+        const snapshot = await database.ref('profiles/' + currentUser).once('value');
+        const p = snapshot.val() || {};
         document.getElementById('profileName').textContent = currentUser;
         document.getElementById('profileStatus').textContent = p.status || 'online';
         document.getElementById('profileStatusInput').value = p.status || '';
@@ -429,13 +410,12 @@ async function loadProfile() {
 
 async function updateProfile() {
     try {
-        const profiles = await readGitHubFile('profiles.json') || {};
-        profiles[currentUser] = {
+        const data = {
             status: document.getElementById('profileStatusInput').value.trim() || 'online',
             bio: document.getElementById('profileBio').value.trim() || '',
             pic: document.getElementById('profilePic').src || ''
         };
-        await writeGitHubFile('profiles.json', profiles, `Profil ${currentUser}`);
+        await database.ref('profiles/' + currentUser).set(data);
         alert('✅ Profil zapisany');
     } catch(e) { alert('Błąd: ' + e.message); }
 }
@@ -456,45 +436,22 @@ async function deleteAccount() {
     if (!confirm('⚠️ OSTATNIE OSTRZEŻENIE: Tej operacji NIE DA SIĘ COFNĄĆ.')) return;
     
     try {
-        const users = await readGitHubFile('users.json') || {};
-        delete users[currentUser];
-        await writeGitHubFile('users.json', users, `Usunięto ${currentUser}`);
-        
-        const profiles = await readGitHubFile('profiles.json') || {};
-        delete profiles[currentUser];
-        await writeGitHubFile('profiles.json', profiles, `Usunięto profil ${currentUser}`);
-        
-        const friends = await readGitHubFile('friends.json') || {};
+        // Usuń użytkownika
+        await database.ref('users/' + currentUser).remove();
+        // Usuń profil
+        await database.ref('profiles/' + currentUser).remove();
+        // Usuń online
+        await database.ref('online/' + currentUser).remove();
+        // Usuń ze znajomych
+        const friendsSnap = await database.ref('friends').once('value');
+        const friends = friendsSnap.val() || {};
         Object.keys(friends).forEach(key => {
-            if (friends[key].includes(currentUser)) {
+            if (friends[key] && friends[key].includes(currentUser)) {
                 friends[key] = friends[key].filter(f => f !== currentUser);
                 if (friends[key].length === 0) delete friends[key];
             }
         });
-        await writeGitHubFile('friends.json', friends, `Usunięto ${currentUser} z list znajomych`);
-        
-        const groups = await readGitHubFile('groups.json') || {};
-        Object.keys(groups).forEach(key => {
-            if (groups[key].members && groups[key].members.includes(currentUser)) {
-                groups[key].members = groups[key].members.filter(m => m !== currentUser);
-                if (groups[key].members.length === 0) delete groups[key];
-            }
-            if (groups[key] && groups[key].owner === currentUser) {
-                delete groups[key];
-            }
-        });
-        await writeGitHubFile('groups.json', groups, `Usunięto ${currentUser} z grup`);
-        
-        const messages = await readGitHubFile('messages.json') || {};
-        Object.keys(messages).forEach(key => {
-            if (key.includes(currentUser)) {
-                delete messages[key];
-            } else {
-                messages[key] = messages[key].filter(m => m.sender !== currentUser);
-                if (messages[key].length === 0) delete messages[key];
-            }
-        });
-        await writeGitHubFile('messages.json', messages, `Usunięto wiadomości ${currentUser}`);
+        await database.ref('friends').set(friends);
         
         alert('✅ Konto usunięte.');
         logout();
@@ -506,11 +463,11 @@ async function deleteAccount() {
 // ===== ZNAJOMI Z AKCEPTACJĄ =====
 async function refreshFriends() {
     try {
-        const friends = await readGitHubFile('friends.json') || {};
-        const friendRequests = await readGitHubFile('friend_requests.json') || {};
-        const list = friends[currentUser] || [];
-        const pending = friendRequests[currentUser] || [];
-        renderFriends(list, pending);
+        const friendsSnap = await database.ref('friends/' + currentUser).once('value');
+        const friends = friendsSnap.val() || [];
+        const requestsSnap = await database.ref('friend_requests/' + currentUser).once('value');
+        const requests = requestsSnap.val() || [];
+        renderFriends(friends, requests);
     } catch(e) {}
 }
 
@@ -518,7 +475,7 @@ function renderFriends(list, pending) {
     const container = document.getElementById('friendsList');
     let html = '';
     
-    if (pending.length > 0) {
+    if (pending && pending.length > 0) {
         html += '<div style="color:#ffaa00;font-size:12px;padding:6px;border-bottom:1px solid rgba(255,255,255,0.05);">📨 Zaproszenia do akceptacji:</div>';
         pending.forEach(f => {
             html += `<div class="list-item" style="background:rgba(255,170,0,0.05);">
@@ -531,7 +488,7 @@ function renderFriends(list, pending) {
         });
     }
     
-    if (list.length > 0) {
+    if (list && list.length > 0) {
         html += '<div style="color:#66ff66;font-size:12px;padding:6px;border-bottom:1px solid rgba(255,255,255,0.05);">👥 Twoi znajomi:</div>';
         list.forEach(f => {
             html += `<div class="list-item">
@@ -542,7 +499,7 @@ function renderFriends(list, pending) {
         });
     }
     
-    if (!list.length && !pending.length) {
+    if ((!list || !list.length) && (!pending || !pending.length)) {
         html = '<div class="loading">Brak znajomych. Dodaj kogoś!</div>';
     }
     container.innerHTML = html;
@@ -553,29 +510,31 @@ async function addFriend() {
     if (!name) return alert('Podaj nazwę');
     if (name === currentUser) return alert('To Ty!');
     
-    const users = await readGitHubFile('users.json') || {};
-    if (!users[name]) {
-        alert('❌ Użytkownik o tej nazwie nie istnieje!');
-        return;
-    }
-    
     try {
+        // Sprawdź czy użytkownik istnieje
+        const userSnap = await database.ref('users/' + name).once('value');
+        if (!userSnap.exists()) {
+            alert('❌ Użytkownik o tej nazwie nie istnieje!');
+            return;
+        }
+        
         // Sprawdź czy już są znajomymi
-        const friends = await readGitHubFile('friends.json') || {};
-        if (friends[currentUser] && friends[currentUser].includes(name)) {
+        const friendsSnap = await database.ref('friends/' + currentUser).once('value');
+        const friends = friendsSnap.val() || [];
+        if (friends.includes(name)) {
             alert('Już macie dodanych znajomych!');
             return;
         }
         
         // Wyślij zaproszenie
-        const requests = await readGitHubFile('friend_requests.json') || {};
-        if (!requests[name]) requests[name] = [];
-        if (requests[name].includes(currentUser)) {
+        const requestsSnap = await database.ref('friend_requests/' + name).once('value');
+        const requests = requestsSnap.val() || [];
+        if (requests.includes(currentUser)) {
             alert('Już wysłałeś zaproszenie do tej osoby!');
             return;
         }
-        requests[name].push(currentUser);
-        await writeGitHubFile('friend_requests.json', requests, `Zaproszenie od ${currentUser} do ${name}`);
+        requests.push(currentUser);
+        await database.ref('friend_requests/' + name).set(requests);
         
         document.getElementById('addFriendInput').value = '';
         alert('✅ Zaproszenie wysłane! Czekaj na akceptację.');
@@ -586,20 +545,17 @@ async function addFriend() {
 async function acceptFriend(name) {
     try {
         // Dodaj do list znajomych obu stron
-        const friends = await readGitHubFile('friends.json') || {};
-        if (!friends[currentUser]) friends[currentUser] = [];
-        if (!friends[name]) friends[name] = [];
-        if (!friends[currentUser].includes(name)) friends[currentUser].push(name);
-        if (!friends[name].includes(currentUser)) friends[name].push(currentUser);
-        await writeGitHubFile('friends.json', friends, `Akceptacja znajomości ${currentUser}-${name}`);
+        const myFriends = (await database.ref('friends/' + currentUser).once('value')).val() || [];
+        const theirFriends = (await database.ref('friends/' + name).once('value')).val() || [];
+        if (!myFriends.includes(name)) myFriends.push(name);
+        if (!theirFriends.includes(currentUser)) theirFriends.push(currentUser);
+        await database.ref('friends/' + currentUser).set(myFriends);
+        await database.ref('friends/' + name).set(theirFriends);
         
         // Usuń z zaproszeń
-        const requests = await readGitHubFile('friend_requests.json') || {};
-        if (requests[currentUser]) {
-            requests[currentUser] = requests[currentUser].filter(f => f !== name);
-            if (requests[currentUser].length === 0) delete requests[currentUser];
-        }
-        await writeGitHubFile('friend_requests.json', requests, `Usunięto zaproszenie ${name}`);
+        const requests = (await database.ref('friend_requests/' + currentUser).once('value')).val() || [];
+        const newRequests = requests.filter(f => f !== name);
+        await database.ref('friend_requests/' + currentUser).set(newRequests);
         
         alert('✅ Zaakceptowano! Teraz jesteście znajomymi.');
         await refreshFriends();
@@ -609,12 +565,9 @@ async function acceptFriend(name) {
 
 async function rejectFriend(name) {
     try {
-        const requests = await readGitHubFile('friend_requests.json') || {};
-        if (requests[currentUser]) {
-            requests[currentUser] = requests[currentUser].filter(f => f !== name);
-            if (requests[currentUser].length === 0) delete requests[currentUser];
-        }
-        await writeGitHubFile('friend_requests.json', requests, `Odrzucono zaproszenie ${name}`);
+        const requests = (await database.ref('friend_requests/' + currentUser).once('value')).val() || [];
+        const newRequests = requests.filter(f => f !== name);
+        await database.ref('friend_requests/' + currentUser).set(newRequests);
         alert('❌ Odrzucono.');
         await refreshFriends();
     } catch(e) { alert('Błąd: ' + e.message); }
@@ -623,7 +576,8 @@ async function rejectFriend(name) {
 // ===== GRUPY =====
 async function refreshGroups() {
     try {
-        const groups = await readGitHubFile('groups.json') || {};
+        const groupsSnap = await database.ref('groups').once('value');
+        const groups = groupsSnap.val() || {};
         const list = [];
         Object.keys(groups).forEach(g => {
             if (groups[g].members && groups[g].members.includes(currentUser)) list.push(g);
@@ -652,10 +606,9 @@ async function createGroup() {
     const name = document.getElementById('groupNameInput').value.trim();
     if (!name) return alert('Podaj nazwę grupy');
     try {
-        const groups = await readGitHubFile('groups.json') || {};
-        if (groups[name]) return alert('Grupa już istnieje');
-        groups[name] = { members: [currentUser], owner: currentUser };
-        await writeGitHubFile('groups.json', groups, `Utworzono ${name}`);
+        const groupsSnap = await database.ref('groups/' + name).once('value');
+        if (groupsSnap.exists()) return alert('Grupa już istnieje');
+        await database.ref('groups/' + name).set({ members: [currentUser], owner: currentUser });
         document.getElementById('groupNameInput').value = '';
         await refreshGroups();
         await updateChatSelect();
@@ -667,30 +620,34 @@ async function createGroup() {
 function startChat(id) {
     currentChat = id;
     document.getElementById('chatSelect').value = id;
+    // Wyczyść wiadomości i załaduj nowe
+    document.getElementById('chatMessages').innerHTML = '';
     loadChat();
     switchTab('chat');
 }
 
 async function updateChatSelect() {
     const sel = document.getElementById('chatSelect');
-    const friends = await readGitHubFile('friends.json') || {};
-    const groups = await readGitHubFile('groups.json') || {};
-    const fList = friends[currentUser] || [];
+    const friendsSnap = await database.ref('friends/' + currentUser).once('value');
+    const groupsSnap = await database.ref('groups').once('value');
+    const friends = friendsSnap.val() || [];
+    const groups = groupsSnap.val() || {};
     const gList = Object.keys(groups).filter(g => groups[g].members && groups[g].members.includes(currentUser));
     sel.innerHTML = '<option value="">-- Wybierz rozmowę --</option>';
-    fList.forEach(f => { sel.innerHTML += `<option value="user:${f}">👤 ${f}</option>`; });
+    friends.forEach(f => { sel.innerHTML += `<option value="user:${f}">👤 ${f}</option>`; });
     gList.forEach(g => { sel.innerHTML += `<option value="group:${g}">📚 ${g}</option>`; });
     if (currentChat) sel.value = currentChat;
 }
 
 async function loadChat() {
     const sel = document.getElementById('chatSelect');
-    const friends = await readGitHubFile('friends.json') || {};
-    const groups = await readGitHubFile('groups.json') || {};
-    const fList = friends[currentUser] || [];
+    const friendsSnap = await database.ref('friends/' + currentUser).once('value');
+    const groupsSnap = await database.ref('groups').once('value');
+    const friends = friendsSnap.val() || [];
+    const groups = groupsSnap.val() || {};
     const gList = Object.keys(groups).filter(g => groups[g].members && groups[g].members.includes(currentUser));
     sel.innerHTML = '<option value="">-- Wybierz rozmowę --</option>';
-    fList.forEach(f => { sel.innerHTML += `<option value="user:${f}">👤 ${f}</option>`; });
+    friends.forEach(f => { sel.innerHTML += `<option value="user:${f}">👤 ${f}</option>`; });
     gList.forEach(g => { sel.innerHTML += `<option value="group:${g}">📚 ${g}</option>`; });
     if (currentChat) sel.value = currentChat;
 
@@ -702,16 +659,23 @@ async function loadChat() {
         return;
     }
     currentChat = val;
+    const displayName = currentChat.startsWith('group:') ? currentChat.replace('group:', '') : currentChat.replace('user:', '');
+    document.getElementById('chatWith').textContent = currentChat.startsWith('group:') ? `📚 ${displayName}` : `👤 ${displayName}`;
+    document.getElementById('chatStatus').innerHTML = `<span class="dot"></span> na żywo ⚡`;
+    
+    // Pobierz historię wiadomości dla tego pokoju
     try {
-        const messages = await readGitHubFile('messages.json') || {};
-        const msgs = messages[currentChat] || [];
-        const displayName = currentChat.startsWith('group:') ? currentChat.replace('group:', '') : currentChat.replace('user:', '');
-        document.getElementById('chatWith').textContent = currentChat.startsWith('group:') ? `📚 ${displayName}` : `👤 ${displayName}`;
-        document.getElementById('chatStatus').innerHTML = `<span class="dot"></span> ${msgs.length} wiadomości`;
+        const messagesSnap = await database.ref('messages').orderByChild('room').equalTo(currentChat).limitToLast(50).once('value');
+        const messages = messagesSnap.val() || {};
         const container = document.getElementById('chatMessages');
-        const oldScroll = container.scrollTop;
         container.innerHTML = '';
-        msgs.slice(-50).forEach(m => addMessageToChat(m));
+        // Sortuj po czasie
+        const sorted = Object.values(messages).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        sorted.forEach(m => {
+            const decrypted = decrypt(m.text);
+            const msg = { sender: m.sender, text: decrypted, time: m.time || new Date().toLocaleTimeString() };
+            addMessageToChat(msg);
+        });
         container.scrollTop = container.scrollHeight;
     } catch(e) {}
 }
@@ -731,19 +695,23 @@ async function sendMessage() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     if (!text || !currentChat) return;
-    const msg = { sender: currentUser, text, time: new Date().toLocaleTimeString() };
+    
+    const encrypted = encrypt(text);
+    const msg = {
+        sender: currentUser,
+        text: encrypted,
+        room: currentChat,
+        time: new Date().toLocaleTimeString(),
+        timestamp: Date.now()
+    };
     try {
-        const messages = await readGitHubFile('messages.json') || {};
-        if (!messages[currentChat]) messages[currentChat] = [];
-        messages[currentChat].push(msg);
-        await writeGitHubFile('messages.json', messages, `Nowa wiadomość w ${currentChat}`);
-        addMessageToChat(msg);
+        await database.ref('messages').push(msg);
+        // Dodaj lokalnie od razu
+        const decrypted = decrypt(encrypted);
+        const localMsg = { sender: currentUser, text: decrypted, time: msg.time };
+        addMessageToChat(localMsg);
         input.value = '';
-    } catch(e) { 
-        alert('Błąd wysyłania: ' + e.message);
-        // Dodaj do kolejki
-        pendingMessages.push({ chat: currentChat, msg });
-    }
+    } catch(e) { alert('Błąd wysyłania: ' + e.message); }
 }
 
 async function sendImage(e) {
@@ -751,13 +719,18 @@ async function sendImage(e) {
     if (!file || !currentChat) return;
     const reader = new FileReader();
     reader.onload = async function(ev) {
-        const msg = { sender: currentUser, text: '📷 Zdjęcie', image: ev.target.result, time: new Date().toLocaleTimeString() };
+        const encrypted = encrypt(ev.target.result);
+        const msg = {
+            sender: currentUser,
+            text: encrypted,
+            room: currentChat,
+            time: new Date().toLocaleTimeString(),
+            timestamp: Date.now()
+        };
         try {
-            const messages = await readGitHubFile('messages.json') || {};
-            if (!messages[currentChat]) messages[currentChat] = [];
-            messages[currentChat].push(msg);
-            await writeGitHubFile('messages.json', messages, `Nowe zdjęcie w ${currentChat}`);
-            addMessageToChat(msg);
+            await database.ref('messages').push(msg);
+            const localMsg = { sender: currentUser, text: '📷 Zdjęcie', image: ev.target.result, time: msg.time };
+            addMessageToChat(localMsg);
         } catch(e) { alert('Błąd: ' + e.message); }
     };
     reader.readAsDataURL(file);
@@ -825,13 +798,11 @@ function switchTab(tab) {
 }
 
 // ===== START =====
-window.onload = async function() {
-    const configLoaded = await loadConfig();
-    if (!configLoaded) return;
+window.onload = function() {
     if (!checkSession()) {
         document.getElementById('authBox').style.display = 'block';
     }
-    console.log('🟣 Kacenger ULTRA V2 loaded');
+    console.log('🟣 Kacenger LIVE loaded');
 };
 </script>
 </body>
