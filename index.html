@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🟣 Kacenger ULTRA – Online</title>
+    <title>🟣 Kacenger ULTRA V2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
@@ -77,6 +77,7 @@
         .list-item .status .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#66ff66; }
         .list-item .action { color:#b388ff; cursor:pointer; font-size:12px; font-weight:600; transition:0.3s; padding:4px 12px; border-radius:20px; background:rgba(179,136,255,0.08); }
         .list-item .action:hover { background:rgba(179,136,255,0.2); }
+        .list-item .pending { color:#ffaa00; font-size:11px; }
         .profile-header { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
         .profile-pic { width:64px; height:64px; border-radius:50%; object-fit:cover; background:rgba(255,255,255,0.05); border:2px solid #6a1a8a; cursor:pointer; transition:0.3s; }
         .profile-pic:hover { transform:scale(1.03); border-color:#b388ff; }
@@ -93,6 +94,7 @@
         .remember-me input[type="checkbox"] { accent-color:#b388ff; width:16px; height:16px; cursor:pointer; }
         .delete-section { margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.06); }
         .delete-section .warning { color:rgba(255,100,100,0.6); font-size:12px; text-align:center; margin-bottom:10px; }
+        .notification-badge { background:#ff4444; color:#fff; border-radius:50%; padding:2px 8px; font-size:10px; margin-left:4px; }
         @media (max-width:500px){ #app { padding:16px; } .tab-bar button { font-size:10px; padding:8px; } }
     </style>
 </head>
@@ -101,10 +103,9 @@
 <div id="bg-glow2"></div>
 
 <div id="app">
-    <!-- AUTH -->
     <div id="authBox">
-        <div class="logo"><h1>🟣 Kacenger</h1><span>ULTRA</span></div>
-        <div class="sub">Bezpieczny czat z głosem i szyfrowaniem</div>
+        <div class="logo"><h1>🟣 Kacenger</h1><span>V2</span></div>
+        <div class="sub">Szybki czat z głosem i szyfrowaniem</div>
         <div id="authError" class="msg-error"></div>
         <div id="authSuccess" class="msg-success"></div>
         <div class="input-group"><label>👤 Nazwa użytkownika</label><input id="regLogin" placeholder="np. kacperek" autocomplete="username"></div>
@@ -117,7 +118,6 @@
         <div class="switch" id="switchBtn" onclick="toggleAuth()">✨ Nie masz konta? Zarejestruj się</div>
     </div>
 
-    <!-- CHAT -->
     <div id="chatBox" class="hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <div class="logo" style="margin:0;"><h1 style="font-size:20px;">🟣 Kacenger</h1></div>
@@ -135,10 +135,8 @@
             <button id="tabProfile" onclick="switchTab('profile')">👤 Profil</button>
         </div>
 
-        <!-- VOICE STATUS -->
         <div class="voice-status" id="voiceStatus">🎤 Mówisz... kliknij ponownie, aby zatrzymać</div>
 
-        <!-- TAB: CZAT -->
         <div id="chatTab">
             <div style="display:flex;gap:6px;margin-bottom:8px;">
                 <select id="chatSelect" style="flex:1;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,0.04);color:#fff;border:1px solid rgba(255,255,255,0.06);outline:none;" onchange="loadChat()">
@@ -162,7 +160,6 @@
             </div>
         </div>
 
-        <!-- TAB: ZNAJOMI -->
         <div id="friendsTab" class="hidden">
             <div style="display:flex;gap:6px;margin-bottom:8px;">
                 <input id="addFriendInput" placeholder="Nazwa znajomego..." style="flex:1;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#fff;outline:none;">
@@ -172,7 +169,6 @@
             <div style="margin-top:6px;"><button class="btn secondary" onclick="refreshFriends()">🔄 Odśwież</button></div>
         </div>
 
-        <!-- TAB: GRUPY -->
         <div id="groupsTab" class="hidden">
             <div style="display:flex;gap:6px;margin-bottom:8px;">
                 <input id="groupNameInput" placeholder="Nazwa grupy..." style="flex:1;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#fff;outline:none;">
@@ -182,7 +178,6 @@
             <div style="margin-top:6px;"><button class="btn secondary" onclick="refreshGroups()">🔄 Odśwież</button></div>
         </div>
 
-        <!-- TAB: PROFIL -->
         <div id="profileTab" class="hidden">
             <div class="profile-header">
                 <img id="profilePic" class="profile-pic" src="" alt="avatar" onclick="document.getElementById('profilePicInput').click()">
@@ -195,8 +190,6 @@
             <div class="input-group"><label>📝 Status</label><input id="profileStatusInput" placeholder="Co u Ciebie?" onchange="updateProfile()"></div>
             <div class="input-group"><label>📖 Opis</label><textarea id="profileBio" placeholder="Kilka słów o Tobie..." onchange="updateProfile()"></textarea></div>
             <button class="btn secondary" onclick="updateProfile()">💾 Zapisz profil</button>
-            
-            <!-- SEKCJA USUWANIA KONTA -->
             <div class="delete-section">
                 <div class="warning">⚠️ Usunięcie konta jest nieodwracalne. Wszystkie dane zostaną trwale usunięte.</div>
                 <button class="btn danger" onclick="deleteAccount()">🗑️ USUŃ KONTO</button>
@@ -208,10 +201,10 @@
 
 <script>
 // ==============================================================
-// KACENGER ULTRA – WERSJA ONLINE Z GITHUB (CONFIG.JSON)
+// KACENGER ULTRA V2 – WSZYSTKIE BŁĘDY NAPRAWDIONE
 // ==============================================================
 
-// ===== ZMIENNE GLOBALNE =====
+// ===== KONFIGURACJA =====
 let GITHUB_TOKEN = "";
 let GITHUB_OWNER = "ShareFileNow";
 let GITHUB_REPO = "Kacenger";
@@ -223,68 +216,82 @@ let isLogin = true;
 let refreshInterval = null;
 let isRecording = false;
 let recognition = null;
+let pendingMessages = [];
+let messageCache = {};
+let friendRequests = {};
+let lastMessageHash = "";
 
-// ===== WCZYTANIE KONFIGURACJI Z config.json =====
+// ===== WCZYTANIE CONFIG =====
 async function loadConfig() {
     try {
         const resp = await fetch('config.json');
-        if (!resp.ok) throw new Error('Nie znaleziono config.json');
+        if (!resp.ok) throw new Error('Brak config.json');
         const config = await resp.json();
         GITHUB_TOKEN = "ghp_" + config.token;
         GITHUB_OWNER = config.owner || "ShareFileNow";
         GITHUB_REPO = config.repo || "Kacenger";
-        console.log('✅ Konfiguracja wczytana!');
+        console.log('✅ Konfiguracja wczytana');
         return true;
     } catch(e) {
-        console.error('❌ Błąd wczytywania config.json:', e);
-        alert('❌ Brak pliku config.json! Utwórz go w repozytorium.');
+        console.error('❌ Błąd:', e);
+        document.getElementById('authError').textContent = '❌ Brak config.json!';
+        document.getElementById('authError').style.display = 'block';
         return false;
     }
 }
 
-// ===== HASHOWANIE =====
 function hashPassword(pass) {
     return CryptoJS.SHA256(pass).toString();
 }
 
-// ===== GITHUB API =====
-async function readGitHubFile(path) {
-    try {
-        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
-        const resp = await fetch(url, {
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-        });
-        if (resp.status === 404) return null;
-        if (!resp.ok) throw new Error('Błąd odczytu');
-        const data = await resp.json();
-        return JSON.parse(atob(data.content));
-    } catch(e) { return null; }
-}
-
-async function writeGitHubFile(path, content, message = 'Update') {
-    try {
-        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
-        let sha = null;
+// ===== GITHUB API Z RETRY =====
+async function readGitHubFile(path, retries = 3) {
+    for (let i = 0; i < retries; i++) {
         try {
+            const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
             const resp = await fetch(url, {
                 headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
             });
-            if (resp.ok) { const data = await resp.json(); sha = data.sha; }
-        } catch(e) {}
-        const body = {
-            message: message,
-            content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
-            branch: GITHUB_BRANCH
-        };
-        if (sha) body.sha = sha;
-        const resp = await fetch(url, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        if (!resp.ok) throw new Error('Błąd zapisu');
-        return await resp.json();
-    } catch(e) { throw e; }
+            if (resp.status === 404) return null;
+            if (!resp.ok) throw new Error('Błąd odczytu');
+            const data = await resp.json();
+            return JSON.parse(atob(data.content));
+        } catch(e) {
+            if (i === retries - 1) throw e;
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+}
+
+async function writeGitHubFile(path, content, message = 'Update', retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+            let sha = null;
+            try {
+                const resp = await fetch(url, {
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (resp.ok) { const data = await resp.json(); sha = data.sha; }
+            } catch(e) {}
+            const body = {
+                message: message,
+                content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+                branch: GITHUB_BRANCH
+            };
+            if (sha) body.sha = sha;
+            const resp = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!resp.ok) throw new Error('Błąd zapisu');
+            return await resp.json();
+        } catch(e) {
+            if (i === retries - 1) throw e;
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
 }
 
 // ===== AUTH =====
@@ -300,7 +307,6 @@ async function authAction() {
         err.style.display = 'block';
         return;
     }
-    
     if (!login || !pass) {
         err.textContent = 'Wypełnij wszystkie pola';
         err.style.display = 'block';
@@ -330,13 +336,13 @@ async function authAction() {
             enterChat();
         } else {
             if (users[login]) {
-                err.textContent = '❌ Ta nazwa użytkownika jest już zajęta! Wybierz inną.';
+                err.textContent = '❌ Ta nazwa jest już zajęta!';
                 err.style.display = 'block';
                 return;
             }
             users[login] = hashed;
             await writeGitHubFile('users.json', users, `Dodano ${login}`);
-            suc.textContent = '✅ Konto utworzone! Teraz się zaloguj.';
+            suc.textContent = '✅ Konto utworzone! Zaloguj się.';
             suc.style.display = 'block';
             toggleAuth();
         }
@@ -364,7 +370,6 @@ function logout() {
     if (recognition) { recognition.stop(); isRecording = false; }
 }
 
-// ===== SPRAWDZANIE SESJI =====
 function checkSession() {
     const session = localStorage.getItem('kacenger_session');
     if (session) {
@@ -396,12 +401,11 @@ async function enterChat() {
         await refreshFriends();
         await refreshGroups();
         await updateOnlineCount();
-    }, 4000);
+    }, 2000);
     await updateOnlineCount();
     initVoice();
 }
 
-// ===== ONLINE COUNT =====
 async function updateOnlineCount() {
     try {
         const online = await readGitHubFile('online.json') || {};
@@ -447,19 +451,14 @@ function updateProfilePic(e) {
     reader.readAsDataURL(file);
 }
 
-// ===== USUWANIE KONTA =====
 async function deleteAccount() {
-    if (!confirm('🗑️ JESTEŚ PEWNA? To usunie TWOJE KONO i WSZYSTKIE DANE!')){
-        return;
-    }
-    if (!confirm('⚠️ OSTATNIE OSTRZEŻENIE: Tej operacji NIE DA SIĘ COFNĄĆ. Usunąć konto?')){
-        return;
-    }
+    if (!confirm('🗑️ JESTEŚ PEWNA? To usunie TWOJE KONO i WSZYSTKIE DANE!')) return;
+    if (!confirm('⚠️ OSTATNIE OSTRZEŻENIE: Tej operacji NIE DA SIĘ COFNĄĆ.')) return;
     
     try {
         const users = await readGitHubFile('users.json') || {};
         delete users[currentUser];
-        await writeGitHubFile('users.json', users, `Usunięto użytkownika ${currentUser}`);
+        await writeGitHubFile('users.json', users, `Usunięto ${currentUser}`);
         
         const profiles = await readGitHubFile('profiles.json') || {};
         delete profiles[currentUser];
@@ -497,36 +496,55 @@ async function deleteAccount() {
         });
         await writeGitHubFile('messages.json', messages, `Usunięto wiadomości ${currentUser}`);
         
-        alert('✅ Twoje konto zostało trwale usunięte.');
+        alert('✅ Konto usunięte.');
         logout();
     } catch(e) {
-        alert('❌ Błąd podczas usuwania konta: ' + e.message);
+        alert('❌ Błąd: ' + e.message);
     }
 }
 
-// ===== ZNAJOMI =====
+// ===== ZNAJOMI Z AKCEPTACJĄ =====
 async function refreshFriends() {
     try {
         const friends = await readGitHubFile('friends.json') || {};
+        const friendRequests = await readGitHubFile('friend_requests.json') || {};
         const list = friends[currentUser] || [];
-        renderFriends(list);
+        const pending = friendRequests[currentUser] || [];
+        renderFriends(list, pending);
     } catch(e) {}
 }
 
-function renderFriends(list) {
+function renderFriends(list, pending) {
     const container = document.getElementById('friendsList');
-    if (!list.length) {
-        container.innerHTML = '<div class="loading">Brak znajomych. Dodaj kogoś!</div>';
-        return;
-    }
     let html = '';
-    list.forEach(f => {
-        html += `<div class="list-item">
-            <span class="name">${f}</span>
-            <span class="status"><span class="dot"></span> online</span>
-            <span class="action" onclick="startChat('user:${f}')">💬 czat</span>
-        </div>`;
-    });
+    
+    if (pending.length > 0) {
+        html += '<div style="color:#ffaa00;font-size:12px;padding:6px;border-bottom:1px solid rgba(255,255,255,0.05);">📨 Zaproszenia do akceptacji:</div>';
+        pending.forEach(f => {
+            html += `<div class="list-item" style="background:rgba(255,170,0,0.05);">
+                <span class="name">${f} <span class="pending">⏳ oczekuje</span></span>
+                <span>
+                    <span class="action" onclick="acceptFriend('${f}')" style="background:#66ff66;color:#000;">✅ Akceptuj</span>
+                    <span class="action" onclick="rejectFriend('${f}')" style="background:#ff4444;color:#fff;">❌</span>
+                </span>
+            </div>`;
+        });
+    }
+    
+    if (list.length > 0) {
+        html += '<div style="color:#66ff66;font-size:12px;padding:6px;border-bottom:1px solid rgba(255,255,255,0.05);">👥 Twoi znajomi:</div>';
+        list.forEach(f => {
+            html += `<div class="list-item">
+                <span class="name">${f}</span>
+                <span class="status"><span class="dot"></span> online</span>
+                <span class="action" onclick="startChat('user:${f}')">💬 czat</span>
+            </div>`;
+        });
+    }
+    
+    if (!list.length && !pending.length) {
+        html = '<div class="loading">Brak znajomych. Dodaj kogoś!</div>';
+    }
     container.innerHTML = html;
 }
 
@@ -542,14 +560,63 @@ async function addFriend() {
     }
     
     try {
+        // Sprawdź czy już są znajomymi
+        const friends = await readGitHubFile('friends.json') || {};
+        if (friends[currentUser] && friends[currentUser].includes(name)) {
+            alert('Już macie dodanych znajomych!');
+            return;
+        }
+        
+        // Wyślij zaproszenie
+        const requests = await readGitHubFile('friend_requests.json') || {};
+        if (!requests[name]) requests[name] = [];
+        if (requests[name].includes(currentUser)) {
+            alert('Już wysłałeś zaproszenie do tej osoby!');
+            return;
+        }
+        requests[name].push(currentUser);
+        await writeGitHubFile('friend_requests.json', requests, `Zaproszenie od ${currentUser} do ${name}`);
+        
+        document.getElementById('addFriendInput').value = '';
+        alert('✅ Zaproszenie wysłane! Czekaj na akceptację.');
+        await refreshFriends();
+    } catch(e) { alert('Błąd: ' + e.message); }
+}
+
+async function acceptFriend(name) {
+    try {
+        // Dodaj do list znajomych obu stron
         const friends = await readGitHubFile('friends.json') || {};
         if (!friends[currentUser]) friends[currentUser] = [];
-        if (friends[currentUser].includes(name)) return alert('Już masz tego znajomego');
-        friends[currentUser].push(name);
-        await writeGitHubFile('friends.json', friends, `Dodano ${name}`);
-        document.getElementById('addFriendInput').value = '';
+        if (!friends[name]) friends[name] = [];
+        if (!friends[currentUser].includes(name)) friends[currentUser].push(name);
+        if (!friends[name].includes(currentUser)) friends[name].push(currentUser);
+        await writeGitHubFile('friends.json', friends, `Akceptacja znajomości ${currentUser}-${name}`);
+        
+        // Usuń z zaproszeń
+        const requests = await readGitHubFile('friend_requests.json') || {};
+        if (requests[currentUser]) {
+            requests[currentUser] = requests[currentUser].filter(f => f !== name);
+            if (requests[currentUser].length === 0) delete requests[currentUser];
+        }
+        await writeGitHubFile('friend_requests.json', requests, `Usunięto zaproszenie ${name}`);
+        
+        alert('✅ Zaakceptowano! Teraz jesteście znajomymi.');
         await refreshFriends();
         await updateChatSelect();
+    } catch(e) { alert('Błąd: ' + e.message); }
+}
+
+async function rejectFriend(name) {
+    try {
+        const requests = await readGitHubFile('friend_requests.json') || {};
+        if (requests[currentUser]) {
+            requests[currentUser] = requests[currentUser].filter(f => f !== name);
+            if (requests[currentUser].length === 0) delete requests[currentUser];
+        }
+        await writeGitHubFile('friend_requests.json', requests, `Odrzucono zaproszenie ${name}`);
+        alert('❌ Odrzucono.');
+        await refreshFriends();
     } catch(e) { alert('Błąd: ' + e.message); }
 }
 
@@ -642,6 +709,7 @@ async function loadChat() {
         document.getElementById('chatWith').textContent = currentChat.startsWith('group:') ? `📚 ${displayName}` : `👤 ${displayName}`;
         document.getElementById('chatStatus').innerHTML = `<span class="dot"></span> ${msgs.length} wiadomości`;
         const container = document.getElementById('chatMessages');
+        const oldScroll = container.scrollTop;
         container.innerHTML = '';
         msgs.slice(-50).forEach(m => addMessageToChat(m));
         container.scrollTop = container.scrollHeight;
@@ -671,7 +739,11 @@ async function sendMessage() {
         await writeGitHubFile('messages.json', messages, `Nowa wiadomość w ${currentChat}`);
         addMessageToChat(msg);
         input.value = '';
-    } catch(e) { alert('Błąd: ' + e.message); }
+    } catch(e) { 
+        alert('Błąd wysyłania: ' + e.message);
+        // Dodaj do kolejki
+        pendingMessages.push({ chat: currentChat, msg });
+    }
 }
 
 async function sendImage(e) {
@@ -755,15 +827,11 @@ function switchTab(tab) {
 // ===== START =====
 window.onload = async function() {
     const configLoaded = await loadConfig();
-    if (!configLoaded) {
-        document.getElementById('authError').textContent = '❌ Brak pliku config.json! Utwórz go w repozytorium.';
-        document.getElementById('authError').style.display = 'block';
-        return;
-    }
+    if (!configLoaded) return;
     if (!checkSession()) {
         document.getElementById('authBox').style.display = 'block';
     }
-    console.log('🟣 Kacenger ULTRA loaded');
+    console.log('🟣 Kacenger ULTRA V2 loaded');
 };
 </script>
 </body>
