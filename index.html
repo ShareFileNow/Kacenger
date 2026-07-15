@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🟣 Kacenger ULTRA – Online</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+        body { background:radial-gradient(circle at 20% 30%, #0f0a1a, #050308); display:flex; justify-content:center; align-items:center; min-height:100vh; overflow:hidden; position:relative; }
+        #bg-glow { position:fixed; width:600px; height:600px; background:radial-gradient(circle, rgba(120,50,255,0.15), transparent 70%); top:-100px; right:-100px; border-radius:50%; pointer-events:none; }
+        #bg-glow2 { position:fixed; width:500px; height:500px; background:radial-gradient(circle, rgba(255,50,150,0.08), transparent 70%); bottom:-100px; left:-100px; border-radius:50%; pointer-events:none; }
+        #app { width:520px; max-width:98vw; background:rgba(20,15,30,0.85); backdrop-filter:blur(20px); border-radius:32px; padding:28px; box-shadow:0 25px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); position:relative; z-index:1; max-height:98vh; overflow-y:auto; transition:0.3s; }
+        #app::-webkit-scrollbar { width:4px; }
+        #app::-webkit-scrollbar-track { background:transparent; }
+        #app::-webkit-scrollbar-thumb { background:#6a1a8a; border-radius:10px; }
+        .logo { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+        .logo h1 { color:#b388ff; font-size:28px; font-weight:800; letter-spacing:-0.5px; }
+        .logo span { background:linear-gradient(135deg,#b388ff,#6a1a8a); padding:2px 12px; border-radius:30px; font-size:10px; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:1px; }
+        .sub { color:rgba(255,255,255,0.4); font-size:13px; font-weight:300; margin-bottom:20px; }
+        .input-group { margin-bottom:14px; }
+        .input-group label { color:rgba(255,255,255,0.6); font-size:12px; font-weight:600; display:block; margin-bottom:5px; letter-spacing:0.3px; text-transform:uppercase; }
+        .input-group input, .input-group textarea { width:100%; padding:12px 16px; border-radius:14px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.04); color:#fff; font-size:14px; outline:none; transition:0.3s; backdrop-filter:blur(10px); }
+        .input-group input:focus, .input-group textarea:focus { border-color:#b388ff; background:rgba(255,255,255,0.08); box-shadow:0 0 25px rgba(179,136,255,0.1); }
+        .input-group textarea { resize:vertical; min-height:60px; }
+        .input-group .hint { color:rgba(255,255,255,0.25); font-size:11px; margin-top:4px; display:block; }
+        .btn { width:100%; padding:14px; border-radius:16px; border:none; background:linear-gradient(135deg,#6a1a8a,#8a2aaa); color:#fff; font-weight:700; font-size:15px; cursor:pointer; transition:0.3s; position:relative; overflow:hidden; }
+        .btn:hover { transform:scale(1.01); box-shadow:0 10px 40px rgba(106,26,138,0.4); }
+        .btn:active { transform:scale(0.98); }
+        .btn.secondary { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
+        .btn.secondary:hover { background:rgba(255,255,255,0.1); box-shadow:none; }
+        .btn.danger { background:linear-gradient(135deg,#882222,#cc3333); }
+        .btn.danger:hover { box-shadow:0 10px 40px rgba(200,50,50,0.3); }
+        .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .switch { color:#b388ff; cursor:pointer; text-align:center; margin-top:14px; font-size:13px; font-weight:500; transition:0.3s; }
+        .switch:hover { text-decoration:underline; color:#d4b8ff; }
+        .hidden { display:none !important; }
+        .msg-error { background:rgba(255,68,68,0.12); border:1px solid rgba(255,68,68,0.2); color:#ff6666; text-align:center; padding:10px; border-radius:12px; margin-bottom:12px; font-size:13px; display:none; }
+        .msg-success { background:rgba(102,255,102,0.08); border:1px solid rgba(102,255,102,0.15); color:#66ff66; text-align:center; padding:10px; border-radius:12px; margin-bottom:12px; font-size:13px; display:none; }
+        .tab-bar { display:flex; gap:4px; margin:16px 0 12px 0; background:rgba(255,255,255,0.03); border-radius:16px; padding:4px; }
+        .tab-bar button { flex:1; padding:10px; border-radius:12px; border:none; background:transparent; color:rgba(255,255,255,0.4); cursor:pointer; font-weight:600; font-size:12px; transition:0.3s; letter-spacing:0.3px; }
+        .tab-bar button.active { background:linear-gradient(135deg,#6a1a8a,#8a2aaa); color:#fff; box-shadow:0 4px 20px rgba(106,26,138,0.3); }
+        .tab-bar button:hover:not(.active) { color:rgba(255,255,255,0.7); }
+        .chat-container { display:flex; flex-direction:column; height:400px; background:rgba(0,0,0,0.3); border-radius:16px; padding:4px; border:1px solid rgba(255,255,255,0.04); }
+        .chat-header { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .chat-header .name { color:#b388ff; font-weight:700; font-size:16px; }
+        .chat-header .status { color:#66ff66; font-size:12px; display:flex; align-items:center; gap:6px; }
+        .chat-header .status .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#66ff66; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+        .chat-messages { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:4px; }
+        .chat-messages::-webkit-scrollbar { width:3px; }
+        .chat-messages::-webkit-scrollbar-thumb { background:#6a1a8a; border-radius:10px; }
+        .msg { padding:8px 14px; border-radius:16px; max-width:80%; word-wrap:break-word; font-size:13px; line-height:1.5; animation:fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .msg.me { background:linear-gradient(135deg,#6a1a8a,#8a2aaa); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+        .msg.other { background:rgba(255,255,255,0.06); color:#ddd; align-self:flex-start; border-bottom-left-radius:4px; }
+        .msg .sender { font-weight:600; color:#b388ff; font-size:11px; margin-bottom:2px; }
+        .msg .time { font-size:9px; color:rgba(255,255,255,0.3); text-align:right; margin-top:3px; }
+        .msg img { max-width:200px; max-height:150px; border-radius:10px; display:block; margin-top:4px; border:1px solid rgba(255,255,255,0.05); }
+        .chat-input { display:flex; gap:8px; padding:10px 14px; border-top:1px solid rgba(255,255,255,0.05); align-items:center; }
+        .chat-input input[type="text"] { flex:1; padding:10px 16px; border-radius:30px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.04); color:#fff; font-size:13px; outline:none; transition:0.3s; }
+        .chat-input input[type="text"]:focus { border-color:#b388ff; background:rgba(255,255,255,0.08); }
+        .chat-input button { padding:10px 18px; border-radius:30px; border:none; background:linear-gradient(135deg,#6a1a8a,#8a2aaa); color:#fff; font-weight:600; cursor:pointer; transition:0.3s; }
+        .chat-input button:hover { transform:scale(1.05); }
+        .chat-input .file-btn { background:rgba(255,255,255,0.06); padding:10px 14px; border-radius:30px; cursor:pointer; transition:0.3s; border:1px solid rgba(255,255,255,0.05); color:#aaa; }
+        .chat-input .file-btn:hover { background:rgba(255,255,255,0.1); }
+        .chat-input .mic-btn { background:rgba(255,255,255,0.06); padding:10px 14px; border-radius:30px; cursor:pointer; transition:0.3s; border:1px solid rgba(255,255,255,0.05); color:#aaa; }
+        .chat-input .mic-btn.active { background:#6a1a8a; color:#fff; border-color:#6a1a8a; animation:pulse 1s infinite; }
+        .list-container { max-height:260px; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:14px; padding:4px; border:1px solid rgba(255,255,255,0.04); }
+        .list-container::-webkit-scrollbar { width:3px; }
+        .list-container::-webkit-scrollbar-thumb { background:#6a1a8a; border-radius:10px; }
+        .list-item { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.04); transition:0.2s; border-radius:8px; }
+        .list-item:hover { background:rgba(255,255,255,0.03); }
+        .list-item .name { color:#ddd; font-weight:500; font-size:14px; }
+        .list-item .status { color:#66ff66; font-size:11px; display:flex; align-items:center; gap:4px; }
+        .list-item .status .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#66ff66; }
+        .list-item .action { color:#b388ff; cursor:pointer; font-size:12px; font-weight:600; transition:0.3s; padding:4px 12px; border-radius:20px; background:rgba(179,136,255,0.08); }
+        .list-item .action:hover { background:rgba(179,136,255,0.2); }
+        .profile-header { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+        .profile-pic { width:64px; height:64px; border-radius:50%; object-fit:cover; background:rgba(255,255,255,0.05); border:2px solid #6a1a8a; cursor:pointer; transition:0.3s; }
+        .profile-pic:hover { transform:scale(1.03); border-color:#b388ff; }
+        .profile-header .info .name { color:#fff; font-size:20px; font-weight:700; }
+        .profile-header .info .status-text { color:rgba(255,255,255,0.4); font-size:13px; }
+        .group-invite { display:flex; gap:8px; margin:8px 0; }
+        .group-invite input { flex:1; padding:8px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.04); color:#fff; outline:none; }
+        .group-invite button { padding:8px 16px; border-radius:12px; border:none; background:#6a1a8a; color:#fff; cursor:pointer; font-weight:600; }
+        .voice-status { background:rgba(102,255,102,0.08); border:1px solid rgba(102,255,102,0.1); color:#66ff66; padding:6px 12px; border-radius:12px; font-size:12px; text-align:center; margin-bottom:8px; display:none; }
+        .online-count { color:rgba(255,255,255,0.3); font-size:12px; }
+        .loading { color:rgba(255,255,255,0.3); text-align:center; padding:20px; font-size:13px; }
+        .footer-text { text-align:center; color:rgba(255,255,255,0.15); font-size:10px; margin-top:16px; letter-spacing:0.5px; }
+        .remember-me { display:flex; align-items:center; gap:8px; margin:10px 0; color:rgba(255,255,255,0.4); font-size:13px; }
+        .remember-me input[type="checkbox"] { accent-color:#b388ff; width:16px; height:16px; cursor:pointer; }
+        .delete-section { margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.06); }
+        .delete-section .warning { color:rgba(255,100,100,0.6); font-size:12px; text-align:center; margin-bottom:10px; }
+        @media (max-width:500px){ #app { padding:16px; } .tab-bar button { font-size:10px; padding:8px; } }
+    </style>
+</head>
+<body>
+<div id="bg-glow"></div>
+<div id="bg-glow2"></div>
+
+<div id="app">
+    <!-- AUTH -->
+    <div id="authBox">
+        <div class="logo"><h1>🟣 Kacenger</h1><span>ULTRA</span></div>
+        <div class="sub">Bezpieczny czat z głosem i szyfrowaniem</div>
+        <div id="authError" class="msg-error"></div>
+        <div id="authSuccess" class="msg-success"></div>
+        <div class="input-group"><label>👤 Nazwa użytkownika</label><input id="regLogin" placeholder="np. kacperek" autocomplete="username"></div>
+        <div class="input-group"><label>🔒 Hasło (min. 8 znaków)</label><input id="regPassword" type="password" placeholder="••••••••" autocomplete="current-password"><span class="hint">Hasło musi mieć co najmniej 8 znaków</span></div>
+        <div class="remember-me">
+            <input type="checkbox" id="rememberMe" checked>
+            <label for="rememberMe">Zapamiętaj mnie na tym urządzeniu</label>
+        </div>
+        <button class="btn" id="authBtn" onclick="authAction()">🚀 Zaloguj</button>
+        <div class="switch" id="switchBtn" onclick="toggleAuth()">✨ Nie masz konta? Zarejestruj się</div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="chatBox" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div class="logo" style="margin:0;"><h1 style="font-size:20px;">🟣 Kacenger</h1></div>
+            <span class="online-count" id="onlineCount">● 0 online</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:14px;margin-bottom:10px;">
+            <span style="color:#b388ff;font-weight:600;font-size:14px;" id="myNameDisplay">👤 loading...</span>
+            <span style="color:rgba(255,255,255,0.3);font-size:12px;cursor:pointer;" onclick="logout()">🚪 wyloguj</span>
+        </div>
+
+        <div class="tab-bar">
+            <button class="active" id="tabChat" onclick="switchTab('chat')">💬 Czat</button>
+            <button id="tabFriends" onclick="switchTab('friends')">👥 Znajomi</button>
+            <button id="tabGroups" onclick="switchTab('groups')">📚 Grupy</button>
+            <button id="tabProfile" onclick="switchTab('profile')">👤 Profil</button>
+        </div>
+
+        <!-- VOICE STATUS -->
+        <div class="voice-status" id="voiceStatus">🎤 Mówisz... kliknij ponownie, aby zatrzymać</div>
+
+        <!-- TAB: CZAT -->
+        <div id="chatTab">
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <select id="chatSelect" style="flex:1;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,0.04);color:#fff;border:1px solid rgba(255,255,255,0.06);outline:none;" onchange="loadChat()">
+                    <option value="">-- Wybierz rozmowę --</option>
+                </select>
+                <button onclick="loadChat()" style="padding:8px 14px;border-radius:12px;border:none;background:rgba(255,255,255,0.06);color:#fff;cursor:pointer;">↻</button>
+            </div>
+            <div class="chat-container">
+                <div class="chat-header">
+                    <span class="name" id="chatWith">Wybierz rozmowę</span>
+                    <span class="status" id="chatStatus"><span class="dot"></span> online</span>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input">
+                    <input id="chatInput" placeholder="Napisz wiadomość..." onkeydown="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()">➤</button>
+                    <label class="file-btn" onclick="document.getElementById('fileInput').click()">📎</label>
+                    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="sendImage(event)">
+                    <button class="mic-btn" id="micBtn" onclick="toggleVoice()">🎤</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: ZNAJOMI -->
+        <div id="friendsTab" class="hidden">
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <input id="addFriendInput" placeholder="Nazwa znajomego..." style="flex:1;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#fff;outline:none;">
+                <button onclick="addFriend()" style="padding:8px 16px;border-radius:12px;border:none;background:#6a1a8a;color:#fff;cursor:pointer;font-weight:600;">+ Dodaj</button>
+            </div>
+            <div class="list-container" id="friendsList"><div class="loading">Ładowanie znajomych...</div></div>
+            <div style="margin-top:6px;"><button class="btn secondary" onclick="refreshFriends()">🔄 Odśwież</button></div>
+        </div>
+
+        <!-- TAB: GRUPY -->
+        <div id="groupsTab" class="hidden">
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <input id="groupNameInput" placeholder="Nazwa grupy..." style="flex:1;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:#fff;outline:none;">
+                <button onclick="createGroup()" style="padding:8px 16px;border-radius:12px;border:none;background:#6a1a8a;color:#fff;cursor:pointer;font-weight:600;">+ Utwórz</button>
+            </div>
+            <div class="list-container" id="groupsList"><div class="loading">Ładowanie grup...</div></div>
+            <div style="margin-top:6px;"><button class="btn secondary" onclick="refreshGroups()">🔄 Odśwież</button></div>
+        </div>
+
+        <!-- TAB: PROFIL -->
+        <div id="profileTab" class="hidden">
+            <div class="profile-header">
+                <img id="profilePic" class="profile-pic" src="" alt="avatar" onclick="document.getElementById('profilePicInput').click()">
+                <input type="file" id="profilePicInput" accept="image/*" style="display:none" onchange="updateProfilePic(event)">
+                <div class="info">
+                    <div class="name" id="profileName">nazwa</div>
+                    <div class="status-text" id="profileStatus">online</div>
+                </div>
+            </div>
+            <div class="input-group"><label>📝 Status</label><input id="profileStatusInput" placeholder="Co u Ciebie?" onchange="updateProfile()"></div>
+            <div class="input-group"><label>📖 Opis</label><textarea id="profileBio" placeholder="Kilka słów o Tobie..." onchange="updateProfile()"></textarea></div>
+            <button class="btn secondary" onclick="updateProfile()">💾 Zapisz profil</button>
+            
+            <!-- SEKCJA USUWANIA KONTA -->
+            <div class="delete-section">
+                <div class="warning">⚠️ Usunięcie konta jest nieodwracalne. Wszystkie dane zostaną trwale usunięte.</div>
+                <button class="btn danger" onclick="deleteAccount()">🗑️ USUŃ KONTO</button>
+            </div>
+        </div>
+        <div class="footer-text">🔒 Dane szyfrowane SHA-256 • GitHub storage • Hasło min. 8 znaków</div>
+    </div>
+</div>
+
+<script>
+// ==============================================================
+// KACENGER ULTRA – WERSJA ONLINE Z GITHUB (CONFIG.JSON)
+// ==============================================================
+
+// ===== ZMIENNE GLOBALNE =====
+let GITHUB_TOKEN = "";
+let GITHUB_OWNER = "ShareFileNow";
+let GITHUB_REPO = "Kacenger";
+let GITHUB_BRANCH = "main";
+
+let currentUser = null;
+let currentChat = null;
+let isLogin = true;
+let refreshInterval = null;
+let isRecording = false;
+let recognition = null;
+
+// ===== WCZYTANIE KONFIGURACJI Z config.json =====
+async function loadConfig() {
+    try {
+        const resp = await fetch('config.json');
+        if (!resp.ok) throw new Error('Nie znaleziono config.json');
+        const config = await resp.json();
+        GITHUB_TOKEN = "ghp_" + config.token;
+        GITHUB_OWNER = config.owner || "ShareFileNow";
+        GITHUB_REPO = config.repo || "Kacenger";
+        console.log('✅ Konfiguracja wczytana!');
+        return true;
+    } catch(e) {
+        console.error('❌ Błąd wczytywania config.json:', e);
+        alert('❌ Brak pliku config.json! Utwórz go w repozytorium.');
+        return false;
+    }
+}
+
+// ===== HASHOWANIE =====
+function hashPassword(pass) {
+    return CryptoJS.SHA256(pass).toString();
+}
+
+// ===== GITHUB API =====
+async function readGitHubFile(path) {
+    try {
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+        const resp = await fetch(url, {
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if (resp.status === 404) return null;
+        if (!resp.ok) throw new Error('Błąd odczytu');
+        const data = await resp.json();
+        return JSON.parse(atob(data.content));
+    } catch(e) { return null; }
+}
+
+async function writeGitHubFile(path, content, message = 'Update') {
+    try {
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+        let sha = null;
+        try {
+            const resp = await fetch(url, {
+                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (resp.ok) { const data = await resp.json(); sha = data.sha; }
+        } catch(e) {}
+        const body = {
+            message: message,
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+            branch: GITHUB_BRANCH
+        };
+        if (sha) body.sha = sha;
+        const resp = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!resp.ok) throw new Error('Błąd zapisu');
+        return await resp.json();
+    } catch(e) { throw e; }
+}
+
+// ===== AUTH =====
+async function authAction() {
+    const login = document.getElementById('regLogin').value.trim();
+    const pass = document.getElementById('regPassword').value.trim();
+    const err = document.getElementById('authError');
+    const suc = document.getElementById('authSuccess');
+    err.style.display = 'none'; suc.style.display = 'none';
+    
+    if (pass.length < 8) {
+        err.textContent = 'Hasło musi mieć co najmniej 8 znaków!';
+        err.style.display = 'block';
+        return;
+    }
+    
+    if (!login || !pass) {
+        err.textContent = 'Wypełnij wszystkie pola';
+        err.style.display = 'block';
+        return;
+    }
+    
+    const hashed = hashPassword(pass);
+    const remember = document.getElementById('rememberMe').checked;
+    
+    try {
+        const users = await readGitHubFile('users.json') || {};
+        if (isLogin) {
+            if (!users[login]) {
+                err.textContent = 'Użytkownik nie istnieje';
+                err.style.display = 'block';
+                return;
+            }
+            if (users[login] !== hashed) {
+                err.textContent = 'Nieprawidłowe hasło';
+                err.style.display = 'block';
+                return;
+            }
+            currentUser = login;
+            if (remember) {
+                localStorage.setItem('kacenger_session', JSON.stringify({ user: login, remember: true }));
+            }
+            enterChat();
+        } else {
+            if (users[login]) {
+                err.textContent = '❌ Ta nazwa użytkownika jest już zajęta! Wybierz inną.';
+                err.style.display = 'block';
+                return;
+            }
+            users[login] = hashed;
+            await writeGitHubFile('users.json', users, `Dodano ${login}`);
+            suc.textContent = '✅ Konto utworzone! Teraz się zaloguj.';
+            suc.style.display = 'block';
+            toggleAuth();
+        }
+    } catch(e) {
+        err.textContent = 'Błąd: ' + e.message;
+        err.style.display = 'block';
+    }
+}
+
+function toggleAuth() {
+    isLogin = !isLogin;
+    document.getElementById('authBtn').textContent = isLogin ? '🚀 Zaloguj' : '✨ Zarejestruj';
+    document.getElementById('switchBtn').textContent = isLogin ? '✨ Nie masz konta? Zarejestruj się' : '🚀 Masz już konto? Zaloguj się';
+    document.getElementById('authError').style.display = 'none';
+    document.getElementById('authSuccess').style.display = 'none';
+}
+
+function logout() {
+    if (!confirm('Wylogować się?')) return;
+    currentUser = null;
+    localStorage.removeItem('kacenger_session');
+    document.getElementById('chatBox').classList.add('hidden');
+    document.getElementById('authBox').style.display = 'block';
+    if (refreshInterval) clearInterval(refreshInterval);
+    if (recognition) { recognition.stop(); isRecording = false; }
+}
+
+// ===== SPRAWDZANIE SESJI =====
+function checkSession() {
+    const session = localStorage.getItem('kacenger_session');
+    if (session) {
+        try {
+            const data = JSON.parse(session);
+            if (data.user && data.remember) {
+                currentUser = data.user;
+                enterChat();
+                return true;
+            }
+        } catch(e) {}
+    }
+    return false;
+}
+
+// ===== WEJŚCIE =====
+async function enterChat() {
+    document.getElementById('authBox').style.display = 'none';
+    document.getElementById('chatBox').classList.remove('hidden');
+    document.getElementById('myNameDisplay').textContent = `👤 ${currentUser}`;
+    await loadProfile();
+    await refreshFriends();
+    await refreshGroups();
+    await updateChatSelect();
+    switchTab('friends');
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(async () => {
+        if (currentChat) await loadChat();
+        await refreshFriends();
+        await refreshGroups();
+        await updateOnlineCount();
+    }, 4000);
+    await updateOnlineCount();
+    initVoice();
+}
+
+// ===== ONLINE COUNT =====
+async function updateOnlineCount() {
+    try {
+        const online = await readGitHubFile('online.json') || {};
+        const count = Object.keys(online).length;
+        document.getElementById('onlineCount').textContent = `● ${count} online`;
+    } catch(e) {}
+}
+
+// ===== PROFIL =====
+async function loadProfile() {
+    try {
+        const profiles = await readGitHubFile('profiles.json') || {};
+        const p = profiles[currentUser] || {};
+        document.getElementById('profileName').textContent = currentUser;
+        document.getElementById('profileStatus').textContent = p.status || 'online';
+        document.getElementById('profileStatusInput').value = p.status || '';
+        document.getElementById('profileBio').value = p.bio || '';
+        if (p.pic) document.getElementById('profilePic').src = p.pic;
+    } catch(e) {}
+}
+
+async function updateProfile() {
+    try {
+        const profiles = await readGitHubFile('profiles.json') || {};
+        profiles[currentUser] = {
+            status: document.getElementById('profileStatusInput').value.trim() || 'online',
+            bio: document.getElementById('profileBio').value.trim() || '',
+            pic: document.getElementById('profilePic').src || ''
+        };
+        await writeGitHubFile('profiles.json', profiles, `Profil ${currentUser}`);
+        alert('✅ Profil zapisany');
+    } catch(e) { alert('Błąd: ' + e.message); }
+}
+
+function updateProfilePic(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        document.getElementById('profilePic').src = ev.target.result;
+        updateProfile();
+    };
+    reader.readAsDataURL(file);
+}
+
+// ===== USUWANIE KONTA =====
+async function deleteAccount() {
+    if (!confirm('🗑️ JESTEŚ PEWNA? To usunie TWOJE KONO i WSZYSTKIE DANE!')){
+        return;
+    }
+    if (!confirm('⚠️ OSTATNIE OSTRZEŻENIE: Tej operacji NIE DA SIĘ COFNĄĆ. Usunąć konto?')){
+        return;
+    }
+    
+    try {
+        const users = await readGitHubFile('users.json') || {};
+        delete users[currentUser];
+        await writeGitHubFile('users.json', users, `Usunięto użytkownika ${currentUser}`);
+        
+        const profiles = await readGitHubFile('profiles.json') || {};
+        delete profiles[currentUser];
+        await writeGitHubFile('profiles.json', profiles, `Usunięto profil ${currentUser}`);
+        
+        const friends = await readGitHubFile('friends.json') || {};
+        Object.keys(friends).forEach(key => {
+            if (friends[key].includes(currentUser)) {
+                friends[key] = friends[key].filter(f => f !== currentUser);
+                if (friends[key].length === 0) delete friends[key];
+            }
+        });
+        await writeGitHubFile('friends.json', friends, `Usunięto ${currentUser} z list znajomych`);
+        
+        const groups = await readGitHubFile('groups.json') || {};
+        Object.keys(groups).forEach(key => {
+            if (groups[key].members && groups[key].members.includes(currentUser)) {
+                groups[key].members = groups[key].members.filter(m => m !== currentUser);
+                if (groups[key].members.length === 0) delete groups[key];
+            }
+            if (groups[key] && groups[key].owner === currentUser) {
+                delete groups[key];
+            }
+        });
+        await writeGitHubFile('groups.json', groups, `Usunięto ${currentUser} z grup`);
+        
+        const messages = await readGitHubFile('messages.json') || {};
+        Object.keys(messages).forEach(key => {
+            if (key.includes(currentUser)) {
+                delete messages[key];
+            } else {
+                messages[key] = messages[key].filter(m => m.sender !== currentUser);
+                if (messages[key].length === 0) delete messages[key];
+            }
+        });
+        await writeGitHubFile('messages.json', messages, `Usunięto wiadomości ${currentUser}`);
+        
+        alert('✅ Twoje konto zostało trwale usunięte.');
+        logout();
+    } catch(e) {
+        alert('❌ Błąd podczas usuwania konta: ' + e.message);
+    }
+}
+
+// ===== ZNAJOMI =====
+async function refreshFriends() {
+    try {
+        const friends = await readGitHubFile('friends.json') || {};
+        const list = friends[currentUser] || [];
+        renderFriends(list);
+    } catch(e) {}
+}
+
+function renderFriends(list) {
+    const container = document.getElementById('friendsList');
+    if (!list.length) {
+        container.innerHTML = '<div class="loading">Brak znajomych. Dodaj kogoś!</div>';
+        return;
+    }
+    let html = '';
+    list.forEach(f => {
+        html += `<div class="list-item">
+            <span class="name">${f}</span>
+            <span class="status"><span class="dot"></span> online</span>
+            <span class="action" onclick="startChat('user:${f}')">💬 czat</span>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+async function addFriend() {
+    const name = document.getElementById('addFriendInput').value.trim();
+    if (!name) return alert('Podaj nazwę');
+    if (name === currentUser) return alert('To Ty!');
+    
+    const users = await readGitHubFile('users.json') || {};
+    if (!users[name]) {
+        alert('❌ Użytkownik o tej nazwie nie istnieje!');
+        return;
+    }
+    
+    try {
+        const friends = await readGitHubFile('friends.json') || {};
+        if (!friends[currentUser]) friends[currentUser] = [];
+        if (friends[currentUser].includes(name)) return alert('Już masz tego znajomego');
+        friends[currentUser].push(name);
+        await writeGitHubFile('friends.json', friends, `Dodano ${name}`);
+        document.getElementById('addFriendInput').value = '';
+        await refreshFriends();
+        await updateChatSelect();
+    } catch(e) { alert('Błąd: ' + e.message); }
+}
+
+// ===== GRUPY =====
+async function refreshGroups() {
+    try {
+        const groups = await readGitHubFile('groups.json') || {};
+        const list = [];
+        Object.keys(groups).forEach(g => {
+            if (groups[g].members && groups[g].members.includes(currentUser)) list.push(g);
+        });
+        renderGroups(list);
+    } catch(e) {}
+}
+
+function renderGroups(list) {
+    const container = document.getElementById('groupsList');
+    if (!list.length) {
+        container.innerHTML = '<div class="loading">Brak grup. Utwórz pierwszą!</div>';
+        return;
+    }
+    let html = '';
+    list.forEach(g => {
+        html += `<div class="list-item">
+            <span class="name">📚 ${g}</span>
+            <span class="action" onclick="startChat('group:${g}')">💬 czat</span>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+async function createGroup() {
+    const name = document.getElementById('groupNameInput').value.trim();
+    if (!name) return alert('Podaj nazwę grupy');
+    try {
+        const groups = await readGitHubFile('groups.json') || {};
+        if (groups[name]) return alert('Grupa już istnieje');
+        groups[name] = { members: [currentUser], owner: currentUser };
+        await writeGitHubFile('groups.json', groups, `Utworzono ${name}`);
+        document.getElementById('groupNameInput').value = '';
+        await refreshGroups();
+        await updateChatSelect();
+        alert('✅ Grupa utworzona!');
+    } catch(e) { alert('Błąd: ' + e.message); }
+}
+
+// ===== CZAT =====
+function startChat(id) {
+    currentChat = id;
+    document.getElementById('chatSelect').value = id;
+    loadChat();
+    switchTab('chat');
+}
+
+async function updateChatSelect() {
+    const sel = document.getElementById('chatSelect');
+    const friends = await readGitHubFile('friends.json') || {};
+    const groups = await readGitHubFile('groups.json') || {};
+    const fList = friends[currentUser] || [];
+    const gList = Object.keys(groups).filter(g => groups[g].members && groups[g].members.includes(currentUser));
+    sel.innerHTML = '<option value="">-- Wybierz rozmowę --</option>';
+    fList.forEach(f => { sel.innerHTML += `<option value="user:${f}">👤 ${f}</option>`; });
+    gList.forEach(g => { sel.innerHTML += `<option value="group:${g}">📚 ${g}</option>`; });
+    if (currentChat) sel.value = currentChat;
+}
+
+async function loadChat() {
+    const sel = document.getElementById('chatSelect');
+    const friends = await readGitHubFile('friends.json') || {};
+    const groups = await readGitHubFile('groups.json') || {};
+    const fList = friends[currentUser] || [];
+    const gList = Object.keys(groups).filter(g => groups[g].members && groups[g].members.includes(currentUser));
+    sel.innerHTML = '<option value="">-- Wybierz rozmowę --</option>';
+    fList.forEach(f => { sel.innerHTML += `<option value="user:${f}">👤 ${f}</option>`; });
+    gList.forEach(g => { sel.innerHTML += `<option value="group:${g}">📚 ${g}</option>`; });
+    if (currentChat) sel.value = currentChat;
+
+    const val = sel.value;
+    if (!val) {
+        currentChat = null;
+        document.getElementById('chatWith').textContent = 'Wybierz rozmowę';
+        document.getElementById('chatMessages').innerHTML = '';
+        return;
+    }
+    currentChat = val;
+    try {
+        const messages = await readGitHubFile('messages.json') || {};
+        const msgs = messages[currentChat] || [];
+        const displayName = currentChat.startsWith('group:') ? currentChat.replace('group:', '') : currentChat.replace('user:', '');
+        document.getElementById('chatWith').textContent = currentChat.startsWith('group:') ? `📚 ${displayName}` : `👤 ${displayName}`;
+        document.getElementById('chatStatus').innerHTML = `<span class="dot"></span> ${msgs.length} wiadomości`;
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = '';
+        msgs.slice(-50).forEach(m => addMessageToChat(m));
+        container.scrollTop = container.scrollHeight;
+    } catch(e) {}
+}
+
+function addMessageToChat(m) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `msg ${m.sender === currentUser ? 'me' : 'other'}`;
+    let content = m.text || '';
+    if (m.image) content += `<br><img src="${m.image}">`;
+    div.innerHTML = `<div class="sender">${m.sender}</div><div>${content}</div><div class="time">${m.time || ''}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text || !currentChat) return;
+    const msg = { sender: currentUser, text, time: new Date().toLocaleTimeString() };
+    try {
+        const messages = await readGitHubFile('messages.json') || {};
+        if (!messages[currentChat]) messages[currentChat] = [];
+        messages[currentChat].push(msg);
+        await writeGitHubFile('messages.json', messages, `Nowa wiadomość w ${currentChat}`);
+        addMessageToChat(msg);
+        input.value = '';
+    } catch(e) { alert('Błąd: ' + e.message); }
+}
+
+async function sendImage(e) {
+    const file = e.target.files[0];
+    if (!file || !currentChat) return;
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+        const msg = { sender: currentUser, text: '📷 Zdjęcie', image: ev.target.result, time: new Date().toLocaleTimeString() };
+        try {
+            const messages = await readGitHubFile('messages.json') || {};
+            if (!messages[currentChat]) messages[currentChat] = [];
+            messages[currentChat].push(msg);
+            await writeGitHubFile('messages.json', messages, `Nowe zdjęcie w ${currentChat}`);
+            addMessageToChat(msg);
+        } catch(e) { alert('Błąd: ' + e.message); }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+}
+
+// ===== CZAT GŁOSOWY =====
+function initVoice() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        document.getElementById('micBtn').style.opacity = '0.3';
+        return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'pl-PL';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('chatInput').value = transcript;
+        document.getElementById('voiceStatus').style.display = 'none';
+        document.getElementById('micBtn').classList.remove('active');
+        isRecording = false;
+        sendMessage();
+    };
+    recognition.onerror = function() {
+        document.getElementById('voiceStatus').style.display = 'none';
+        document.getElementById('micBtn').classList.remove('active');
+        isRecording = false;
+    };
+    recognition.onend = function() {
+        document.getElementById('voiceStatus').style.display = 'none';
+        document.getElementById('micBtn').classList.remove('active');
+        isRecording = false;
+    };
+}
+
+function toggleVoice() {
+    if (!recognition) return alert('Twój browser nie wspiera rozpoznawania mowy');
+    if (isRecording) {
+        recognition.stop();
+        document.getElementById('voiceStatus').style.display = 'none';
+        document.getElementById('micBtn').classList.remove('active');
+        isRecording = false;
+        return;
+    }
+    if (!currentChat) return alert('Najpierw wybierz rozmowę');
+    recognition.start();
+    document.getElementById('voiceStatus').style.display = 'block';
+    document.getElementById('micBtn').classList.add('active');
+    isRecording = true;
+}
+
+// ===== SWITCH TAB =====
+function switchTab(tab) {
+    document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+    document.getElementById('chatTab').classList.add('hidden');
+    document.getElementById('friendsTab').classList.add('hidden');
+    document.getElementById('groupsTab').classList.add('hidden');
+    document.getElementById('profileTab').classList.add('hidden');
+    if (tab === 'chat') { document.getElementById('chatTab').classList.remove('hidden'); document.getElementById('tabChat').classList.add('active'); }
+    else if (tab === 'friends') { document.getElementById('friendsTab').classList.remove('hidden'); document.getElementById('tabFriends').classList.add('active'); refreshFriends(); }
+    else if (tab === 'groups') { document.getElementById('groupsTab').classList.remove('hidden'); document.getElementById('tabGroups').classList.add('active'); refreshGroups(); }
+    else if (tab === 'profile') { document.getElementById('profileTab').classList.remove('hidden'); document.getElementById('tabProfile').classList.add('active'); loadProfile(); }
+}
+
+// ===== START =====
+window.onload = async function() {
+    const configLoaded = await loadConfig();
+    if (!configLoaded) {
+        document.getElementById('authError').textContent = '❌ Brak pliku config.json! Utwórz go w repozytorium.';
+        document.getElementById('authError').style.display = 'block';
+        return;
+    }
+    if (!checkSession()) {
+        document.getElementById('authBox').style.display = 'block';
+    }
+    console.log('🟣 Kacenger ULTRA loaded');
+};
+</script>
+</body>
+</html>
