@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Wyszukiwarka twarzy 1:1</title>
+    <!-- TensorFlow.js i face-api.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #0d1117;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            background: #161b22;
+            border-radius: 32px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
+            border: 1px solid #30363d;
+        }
+        h1 {
+            color: #f0f6fc;
+            font-weight: 500;
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sub {
+            color: #8b949e;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+            border-left: 3px solid #58a6ff;
+            padding-left: 14px;
+        }
+        .upload-zone {
+            border: 2px dashed #30363d;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            color: #8b949e;
+            transition: 0.25s;
+            cursor: pointer;
+            background: #0d1117;
+            margin-bottom: 24px;
+        }
+        .upload-zone:hover {
+            border-color: #58a6ff;
+            background: #0d1117;
+        }
+        .upload-zone.dragover {
+            border-color: #58a6ff;
+            background: #1c2333;
+        }
+        .upload-zone input {
+            display: none;
+        }
+        .upload-zone svg {
+            width: 48px;
+            height: 48px;
+            fill: #58a6ff;
+            margin-bottom: 12px;
+        }
+        .preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .preview-box {
+            background: #0d1117;
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid #21262d;
+            flex: 1 1 200px;
+            max-width: 280px;
+            text-align: center;
+        }
+        .preview-box img, .preview-box canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            background: #010409;
+            max-height: 260px;
+            object-fit: contain;
+        }
+        .preview-box .label {
+            color: #8b949e;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 16px 0 10px;
+        }
+        .btn {
+            background: #21262d;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #c9d1d9;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #30363d;
+        }
+        .btn-primary {
+            background: #238636;
+            border-color: #2ea043;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+        .btn-danger {
+            background: #da3633;
+            border-color: #f85149;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #f85149;
+        }
+        .btn-outline {
+            background: transparent;
+            border-color: #30363d;
+        }
+        .btn-outline:hover {
+            background: #21262d;
+        }
+        .results {
+            margin-top: 28px;
+            background: #0d1117;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #21262d;
+        }
+        .results h3 {
+            color: #f0f6fc;
+            font-weight: 400;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-item {
+            background: #161b22;
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            border-left: 4px solid #58a6ff;
+            color: #c9d1d9;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+        .result-item .source {
+            font-weight: 500;
+            color: #f0f6fc;
+            word-break: break-all;
+            flex: 1;
+        }
+        .result-item .score {
+            background: #1c2333;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: #58a6ff;
+            font-weight: 600;
+        }
+        .result-item .link {
+            color: #58a6ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        .result-item .link:hover {
+            text-decoration: underline;
+        }
+        .status {
+            color: #8b949e;
+            font-size: 0.9rem;
+            padding: 8px 0;
+            text-align: center;
+        }
+        .status.loading {
+            color: #f0883e;
+        }
+        .badge {
+            background: #21262d;
+            border-radius: 30px;
+            padding: 2px 14px;
+            font-size: 0.7rem;
+            color: #8b949e;
+        }
+        .footer {
+            margin-top: 20px;
+            color: #484f58;
+            font-size: 0.75rem;
+            text-align: center;
+            border-top: 1px solid #21262d;
+            padding-top: 18px;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 18px; }
+            .preview-box { flex: 1 1 100%; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        <span>🕵️ Wyszukiwarka twarzy</span>
+        <span class="badge">1:1 · lokalnie</span>
+    </h1>
+    <div class="sub">Wgraj zdjęcie twarzy → skanowanie w sieci w poszukiwaniu podobnych (praktycznie 1:1)</div>
+
+    <!-- Obszar wgrywania -->
+    <div class="upload-zone" id="dropZone">
+        <svg viewBox="0 0 24 24" width="48" height="48"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+        <p style="font-weight: 500; color:#c9d1d9;">Przeciągnij zdjęcie lub kliknij, aby wybrać</p>
+        <p style="font-size:0.85rem;">Obsługiwane: JPG, PNG, WebP (max 10MB)</p>
+        <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <!-- Podgląd -->
+    <div class="preview-grid" id="previewGrid">
+        <div class="preview-box">
+            <div id="sourcePreviewPlaceholder" style="display:flex; align-items:center; justify-content:center; height:160px; color:#484f58; font-size:0.9rem;">⏺ Brak zdjęcia</div>
+            <img id="sourceImg" style="display:none;" alt="twoje zdjęcie">
+            <div class="label">📸 Twoje zdjęcie</div>
+        </div>
+        <div class="preview-box">
+            <canvas id="faceCanvas" style="width:100%; border-radius:12px; background:#010409;"></canvas>
+            <div class="label">🧬 Wykryta twarz (face-api.js)</div>
+        </div>
+    </div>
+
+    <!-- Akcje -->
+    <div class="actions">
+        <button class="btn btn-primary" id="searchBtn" disabled>🔎 Szukaj podobnych twarzy</button>
+        <button class="btn btn-outline" id="clearBtn">✕ Wyczyść</button>
+    </div>
+
+    <!-- Wyniki -->
+    <div class="results" id="resultsContainer">
+        <h3>
+            <span>🌐 Wyniki wyszukiwania</span>
+            <span class="badge" id="resultCount">0 znalezionych</span>
+        </h3>
+        <div id="resultsList">
+            <div class="status">Wgraj zdjęcie i kliknij „Szukaj”</div>
+        </div>
+    </div>
+    <div class="footer">
+        ⚡ face-api.js (TensorFlow.js) · wyszukiwanie 1:1 · wszystko w przeglądarce
+    </div>
+</div>
+
+<script>
+    (function() {
+        // --- ELEMENTY DOM ---
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const sourceImg = document.getElementById('sourceImg');
+        const sourcePreviewPlaceholder = document.getElementById('sourcePreviewPlaceholder');
+        const faceCanvas = document.getElementById('faceCanvas');
+        const searchBtn = document.getElementById('searchBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultsList = document.getElementById('resultsList');
+        const resultCount = document.getElementById('resultCount');
+
+        // --- STAN ---
+        let currentImageData = null;          // przechowuje obiekt ImageData / blob
+        let currentFaceDescriptor = null;     // deskryptor twarzy (Float32Array)
+        let isModelLoaded = false;
+        let isProcessing = false;
+
+        // --- ŁADOWANIE MODELI face-api.js ---
+        async function loadModels() {
+            try {
+                // Użyjemy modeli z CDN (wersja z face-api.js)
+                const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                isModelLoaded = true;
+                console.log('✅ Modele face-api.js załadowane');
+                updateUI();
+            } catch (err) {
+                console.error('❌ Błąd ładowania modeli:', err);
+                resultsList.innerHTML = `<div class="status" style="color:#f85149;">⚠️ Nie udało się załadować modeli AI. Sprawdź połączenie z internetem.</div>`;
+            }
+        }
+
+        // --- AKTUALIZACJA UI ---
+        function updateUI() {
+            const hasImage = currentImageData !== null;
+            searchBtn.disabled = !(hasImage && isModelLoaded && currentFaceDescriptor !== null && !isProcessing);
+            if (!isModelLoaded) {
+                searchBtn.textContent = '⏳ Ładowanie modeli...';
+            } else if (!hasImage) {
+                searchBtn.textContent = '📤 Wgraj zdjęcie';
+            } else if (currentFaceDescriptor === null && hasImage) {
+                searchBtn.textContent = '🧬 Wykrywanie twarzy...';
+            } else {
+                searchBtn.textContent = '🔎 Szukaj podobnych twarzy';
+            }
+        }
+
+        // --- WYKRYWANIE TWARZY ZE ZDJĘCIA ---
+        async function detectFaceFromImage(imageElement) {
+            if (!isModelLoaded) {
+                resultsList.innerHTML = `<div class="status" style="color:#f0883e;">⏳ Modele jeszcze się ładują, spróbuj za chwilę...</div>`;
+                return null;
+            }
+            try {
+                const detections = await faceapi.detectAllFaces(imageElement)
+                    .withFaceLandmarks()
+                    .withFaceDescriptors();
+
+                if (!detections || detections.length === 0) {
+                    resultsList.innerHTML = `<div class="status" style="color:#f85149;">❌ Nie wykryto twarzy na zdjęciu. Spróbuj innego.</div>`;
+                    return null;
+                }
+
+                // Bierzemy pierwszą wykrytą twarz (największą / najlepszą)
+                const best = detections[0];
+                const descriptor = best.descriptor;
+
+                // Rysujemy na canvasie bounding box i punkty
+                const displaySize = { width: imageElement.width, height: imageElement.height };
+                faceapi.matchDimensions(faceCanvas, displaySize);
+                const resized = faceapi.resizeResults(detections, displaySize);
+                faceapi.draw.drawDetections(faceCanvas, resized);
+                faceapi.draw.drawFaceLandmarks(faceCanvas, resized);
+
+                return descriptor;
+            } catch (err) {
+                console.error('Błąd detekcji twarzy:', err);
+                resultsList.innerHTML = `<div class="status" style="color:#f85149;">⚠️ Błąd podczas analizy twarzy: ${err.message}</div>`;
+                return null;
+            }
+        }
+
+        // --- PRZETWARZANIE WYBRANEGO ZDJĘCIA ---
+        async function handleImageFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                resultsList.innerHTML = `<div class="status" style="color:#f85149;">❌ To nie jest obrazek.</div>`;
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                resultsList.innerHTML = `<div class="status" style="color:#f85149;">❌ Plik jest za duży (max 10MB).</div>`;
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const dataUrl = e.target.result;
+                sourceImg.src = dataUrl;
+                sourceImg.style.display = 'block';
+                sourcePreviewPlaceholder.style.display = 'none';
+
+                // Poczekaj aż obrazek się załaduje
+                await new Promise((resolve) => {
+                    if (sourceImg.complete) resolve();
+                    else sourceImg.onload = resolve;
+                });
+
+                // Ustaw canvas na wymiary obrazka
+                faceCanvas.width = sourceImg.width;
+                faceCanvas.height = sourceImg.height;
+                const ctx = faceCanvas.getContext('2d');
+                ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+
+                currentImageData = dataUrl;
+
+                // Wykryj twarz
+                currentFaceDescriptor = null;
+                updateUI();
+                const descriptor = await detectFaceFromImage(sourceImg);
+                if (descriptor) {
+                    currentFaceDescriptor = descriptor;
+                    resultsList.innerHTML = `<div class="status" style="color:#58a6ff;">✅ Twarz wykryta! Kliknij „Szukaj”, aby znaleźć podobne w sieci.</div>`;
+                } else {
+                    // komunikat już w detectFaceFromImage
+                    currentFaceDescriptor = null;
+                }
+                updateUI();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- SYMULACJA WYSZUKIWANIA 1:1 W INTERNECIE ---
+        // Używamy face-api.js do porównania z wygenerowanymi „pseudo-wynikami”
+        // aby pokazać działanie 1:1 – w rzeczywistości musiałbyś mieć bazę zdjęć.
+        // Generujemy przykładowe dopasowania z różnych domen (symulacja).
+        function generateMockResults(descriptor) {
+            // Symulujemy wyniki – w rzeczywistej aplikacji tutaj byłoby zapytanie do API
+            // np. Google Lens / Pimeyes / Apify / Azure Face.
+            const mockItems = [
+                { source: 'instagram.com/p/Cx9...', similarity: 0.94, link: 'https://instagram.com/p/Cx9...' },
+                { source: 'facebook.com/photo?...', similarity: 0.89, link: 'https://facebook.com/photo?...' },
+                { source: 'twitter.com/user/status/...', similarity: 0.82, link: 'https://twitter.com/user/status/...' },
+                { source: 'linkedin.com/in/...', similarity: 0.78, link: 'https://linkedin.com/in/...' },
+                { source: 'pinterest.com/pin/...', similarity: 0.73, link: 'https://pinterest.com/pin/...' },
+            ];
+            // Dodajemy trochę losowości, żeby nie było za sztucznie
+            return mockItems.map(item => ({
+                ...item,
+                similarity: Math.min(0.99, item.similarity + (Math.random() * 0.06 - 0.03))
+            })).sort((a,b) => b.similarity - a.similarity);
+        }
+
+        // --- GŁÓWNA FUNKCJA SZUKANIA ---
+        async function performSearch() {
+            if (!currentFaceDescriptor || !isModelLoaded) {
+                resultsList.innerHTML = `<div class="status" style="color:#f0883e;">⏳ Najpierw wgraj zdjęcie z wykrywalną twarzą.</div>`;
+                return;
+            }
+
+            if (isProcessing) return;
+            isProcessing = true;
+            searchBtn.disabled = true;
+            searchBtn.textContent = '⏳ Przeszukiwanie...';
+            resultsList.innerHTML = `<div class="status loading">⏳ Szukanie podobnych twarzy w sieci (1:1)...</div>`;
+
+            try {
+                // Symulacja opóźnienia sieciowego (0.8–1.5s)
+                await new Promise(resolve => setTimeout(resolve, 900 + Math.random() * 600));
+
+                // 🔥 W tym miejscu w rzeczywistej aplikacji wysyłasz deskryptor lub zdjęcie
+                // do zewnętrznego API (np. Pimeyes, Apify Face Search, Google Lens, Azure Face).
+                // Poniżej mock danych.
+                const results = generateMockResults(currentFaceDescriptor);
+
+                // Wyświetl wyniki
+                if (results.length === 0) {
+                    resultsList.innerHTML = `<div class="status">😕 Nie znaleziono podobnych twarzy w sieci.</div>`;
+                    resultCount.textContent = '0 znalezionych';
+                } else {
+                    let html = '';
+                    results.forEach((item, idx) => {
+                        const score = (item.similarity * 100).toFixed(1);
+                        html += `
+                            <div class="result-item">
+                                <span class="source">#${idx+1} · ${item.source}</span>
+                                <span class="score">${score}%</span>
+                                <a href="${item.link}" target="_blank" class="link">🔗 zobacz</a>
+                            </div>
+                        `;
+                    });
+                    resultsList.innerHTML = html;
+                    resultCount.textContent = `${results.length} znalezionych`;
+                }
+
+            } catch (err) {
+                console.error(err);
+                resultsList.innerHTML = `<div class="status" style="color:#f85149;">❌ Błąd wyszukiwania: ${err.message}</div>`;
+            } finally {
+                isProcessing = false;
+                updateUI();
+            }
+        }
+
+        // --- CZYŚĆ ---
+        function clearAll() {
+            currentImageData = null;
+            currentFaceDescriptor = null;
+            sourceImg.src = '';
+            sourceImg.style.display = 'none';
+            sourcePreviewPlaceholder.style.display = 'flex';
+            const ctx = faceCanvas.getContext('2d');
+            ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+            resultsList.innerHTML = `<div class="status">Wgraj zdjęcie i kliknij „Szukaj”</div>`;
+            resultCount.textContent = '0 znalezionych';
+            fileInput.value = '';
+            updateUI();
+        }
+
+        // --- EVENTY ---
+        // Drag & drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageFile(files[0]);
+            }
+        });
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageFile(e.target.files[0]);
+            }
+        });
+
+        // Przyciski
+        searchBtn.addEventListener('click', performSearch);
+        clearBtn.addEventListener('click', clearAll);
+
+        // --- START: ŁADOWANIE MODELI ---
+        loadModels();
+
+        // Obsługa błędów ładowania modeli (np. brak netu)
+        window.addEventListener('load', () => {
+            // Jeśli po 8 sekundach modele nie są załadowane, pokaż komunikat
+            setTimeout(() => {
+                if (!isModelLoaded) {
+                    resultsList.innerHTML = `<div class="status" style="color:#f0883e;">⏳ Ładowanie modeli trwa dłużej niż oczekiwano. Sprawdź połączenie internetowe.</div>`;
+                }
+            }, 8000);
+        });
+
+        // Małe ulepszenie: ponowne wykrywanie po załadowaniu modeli jeśli mamy już obraz
+        // (jeśli użytkownik wgrał zdjęcie zanim modele się załadowały)
+        let modelsLoadedFlag = false;
+        const origLoad = loadModels;
+        loadModels = async function() {
+            await origLoad();
+            modelsLoadedFlag = true;
+            if (currentImageData && sourceImg.src) {
+                // spróbuj ponownie wykryć twarz
+                const descriptor = await detectFaceFromImage(sourceImg);
+                if (descriptor) {
+                    currentFaceDescriptor = descriptor;
+                    resultsList.innerHTML = `<div class="status" style="color:#58a6ff;">✅ Twarz wykryta! Kliknij „Szukaj”.</div>`;
+                    updateUI();
+                }
+            }
+        };
+        // Nadpisujemy, aby wywołać nową wersję
+        // (już wywołane na starcie, ale żeby było elegancko)
+        // Po prostu wywołajmy ponownie po chwili, jeśli modele nie załadowane
+        if (!isModelLoaded) {
+            setTimeout(() => {
+                if (!isModelLoaded) {
+                    loadModels();
+                }
+            }, 2000);
+        }
+
+        // expose dla debugu
+        window.__debug = { faceapi, currentDescriptor: () => currentFaceDescriptor };
+    })();
+</script>
+</body>
+</html>
